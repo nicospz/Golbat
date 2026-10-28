@@ -497,6 +497,42 @@ Retrieve a tappable (invasions, research, etc.).
 - 400: Invalid ID
 - 404: Tappable not found
 
+### POST /api/tappable/scan
+
+Unexpired tappables within a bounding box, filtered by DNF clauses.
+
+**Authentication:** Required
+
+**Request:**
+```json
+{
+  "min": {"lat": 47.0, "lon": 8.0},
+  "max": {"lat": 47.5, "lon": 8.6},
+  "limit": 0,
+  "updated_after": 0,
+  "filters": [
+    {"reward_type": ["item"], "item_id": [1301]},
+    {"reward_type": ["pokemon_candy"], "reward_pokemon_id": [25]},
+    {"pokemon_id": [25]}
+  ]
+}
+```
+
+- `limit`: 0 = server default; clamped by `tuning.max_tappable_results`.
+- `updated_after`: as in the fort scans; applied after the scan and limit.
+- `filters`: clauses are OR'd, fields within a clause AND'd. Omitted/null list = no constraint; empty list = matches nothing. Omitted/empty `filters` matches every tappable.
+- `reward_type` values: `item`, `stardust`, `pokecoin`, `pokemon_candy`, `experience`, `pokemon_egg`, `avatar_template_id`, `sticker_id`, `mega_energy_pokemon_id`, `xl_candy`, `follower_pokemon`, `neutral_avatar_template_id`, `neutral_avatar_item_template`, `neutral_avatar_item_display`, `temp_evo_pokemon_branch`. Case-sensitive.
+- `pokemon_id` matches encounter tappables only; the reward fields match reward tappables only.
+
+**Response:**
+```json
+{"tappables": [ApiTappableResult], "examined": 0, "skipped": 0, "total": 0, "limit_reached": false}
+```
+
+**Status Codes:**
+- 200: OK
+- 400: Unknown `reward_type`
+
 ---
 
 ## Device Endpoints
@@ -1051,4 +1087,5 @@ every timezone, including 45-minute offsets.
 | `tuning.extended_timeout` | Enable 30s timeout for raw processing |
 | `tuning.profile_routes` | Enable pprof debug endpoints |
 | `tuning.max_pokemon_results` | Max pokemon returned per query |
+| `tuning.max_tappable_results` | Max tappables returned per `/api/tappable/scan` (default 9000; `limits.max_tappable_results` in `/api/status`) |
 | `tuning.max_pokemon_distance` | Max distance between min/max points in searches |
